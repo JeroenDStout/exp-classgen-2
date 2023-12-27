@@ -1,0 +1,42 @@
+refl gaos__refl_t {
+  <template gaos::refl_t
+   for enum>
+  <tag gaos>
+}
+
+refl my_safety_check {
+  <template my_safety_check_t>
+
+  is_safe_to_continue  :> bool { false }
+  get_warning_severity :> enum warning_severity [ high medium low none ] { none }
+}
+
+enum my_enum {
+  enum validity {
+    <refl safety_check>
+
+    with is_safe_to_continue  aka safe
+    with get_warning_severity aka severity
+
+    [ valid                safe :>  true
+      valid_with_warnings  safe :>  true  severity :> medium
+      invalid              safe :> false  severity :>   high
+    ]
+  }
+
+  to_int   aka  ti :> i8
+  is_valid aka  iv :> validity { invalid }
+
+  [ one	   ti :> 1  iv :> valid
+    two	   ti :> 2  iv :> valid
+    three  ti :> 3
+    eight  ti :> 8 
+  ]
+}
+
+pod my_pod {
+  <refl gaos__refl_t>
+}
+
+proc my_proc {
+}

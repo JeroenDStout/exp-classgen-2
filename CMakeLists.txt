@@ -23,6 +23,7 @@ include(cmake/generic/antlr.cmake)
 
 # Subprojects
 add_subdirectory(src/experiment)
+add_subdirectory(src/classgen)
 add_subdirectory(src/version)
 
 # Publication
