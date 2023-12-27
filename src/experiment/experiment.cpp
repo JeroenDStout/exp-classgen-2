@@ -10,7 +10,7 @@ int main()
     std::cout
       << std::endl
       << "          * * * * * ** * * * * " << std::endl
-      << "         * * * Classgen-1 * * * " << std::endl
+      << "         * * * Classgen-2 * * * " << std::endl
       << "          * * * * ** * * * * * " << std::endl
       << std::endl
       << version::get_git_essential_version() << std::endl
