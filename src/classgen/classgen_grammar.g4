@@ -141,19 +141,11 @@ constant_integer
 // ------------------------------
     
 identifier_name
-    : IDENTIFIER
-    ;
-    
-identifier_prefix
-    : identifier_namespace_pre
-    ;
-    
-identifier_postfix
-    : identifier_namespace_post
+    : identifier_namespace_pre? IDENTIFIER
     ;
     
 identifier_pure
-    : identifier_prefix? identifier_name identifier_postfix?
+    : identifier_name identifier_postfix?
     ;
     
 identifier_ex
@@ -162,11 +154,15 @@ identifier_ex
     ;
     
 identifier_with_alias
-    : identifier_prefix? IDENTIFIER identifier_postfix? KEYWORD_AKA identifier_alias_list
+    : identifier_name identifier_postfix? KEYWORD_AKA identifier_alias_list
     ;
     
 identifier_alias_list
-    : IDENTIFIER (',' IDENTIFIER)*
+    : identifier_name (',' identifier_name)*
+    ;
+    
+identifier_postfix
+    : identifier_namespace_post
     ;
     
 identifier_namespace_pre
