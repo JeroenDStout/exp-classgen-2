@@ -1,0 +1,1 @@
+bumpkins_package_zip.py mode:"Debug" config:"RelWithDebInfo" info:"build\publish_info.txt" out:"zip/bumpkins_test_relwithdebinfo.zip"

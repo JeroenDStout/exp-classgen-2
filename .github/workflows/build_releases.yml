@@ -1,0 +1,54 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  BUILD_TYPE: Release
+  
+permissions:
+  contents: write
+  
+jobs:
+  build:
+    name: "Windows Latest MSVC"
+    runs-on: "Windows-latest"
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Checkout
+      run: git fetch --unshallow --update-head-ok origin '+refs/heads/*:refs/heads/*'
+
+    - name: Run requirements script
+      run: python ${{github.workspace}}/setup/requirements.py install_all
+          
+    - name: Configure
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+      
+    - name: Build (Release)
+      run: cmake --build ${{github.workspace}}/build --config Release
+      
+    - name: Build (RelWithDebInfo)
+      run: cmake --build ${{github.workspace}}/build --config RelWithDebInfo
+      
+    - name: Package (Release)
+      run: python ${{github.workspace}}/util/bumpkins_package_zip.py
+        mode:"Release"
+        config:"Release"
+        info:"build/publish_info.txt"
+        out:"zip/experiment-release.zip"
+      
+    - name: Package (RelWithDebInfo)
+      run: python ${{github.workspace}}/util/bumpkins_package_zip.py
+        mode:"Debug"
+        config:"RelWithDebInfo"
+        info:"build/publish_info.txt"
+        out:"zip/experiment-relwithdebinfo.zip"
+        
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          zip/experiment-release.zip
+          zip/experiment-relwithdebinfo.zip
