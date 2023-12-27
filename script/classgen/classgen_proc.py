@@ -11,7 +11,8 @@ from classgen_grammarLexer   import classgen_grammarLexer
 from classgen_grammarParser  import classgen_grammarParser
 from classgen_grammarVisitor import classgen_grammarVisitor
 
-from classgen import debug  as classgen_debug
+from classgen import debug  as cg_debug
+from classgen import reader as cg_reader
 
 sys_arg = {}
 for arg in sys.argv[2:]:
@@ -39,7 +40,9 @@ parser = classgen_grammarParser(stream)
 tree    = parser.prog()
 
 #debug
-visitor = classgen_debug.classgen_debug_visitor(parser)
+#visitor = cg_debug.classgen_debug_visitor(parser)
+#visitor.visit(tree)
+
+visitor = cg_reader.cg_reader_visitor(parser)
 visitor.visit(tree)
-        
-#print(str(visitor.tree))
+print(visitor.trunk.to_big_string())
