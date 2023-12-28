@@ -2,8 +2,10 @@ import copy
 from overrides import override
 from classgen_grammarParser  import classgen_grammarParser
 from classgen_grammarVisitor import classgen_grammarVisitor
-from .             import tree            as cg_tree
-from .reader_stack import cg_reader_stack as cg_reader_stack
+from .               import tree            as cg_tree
+from .reader_stack   import cg_reader_stack
+from .types_abstract import cg_typed_value_type
+from .types_builtin  import cg_map_case
     
 #
 #
@@ -39,8 +41,11 @@ class cg_reader_visitor(classgen_grammarVisitor):
   def visitDefinition_object_constant(self, ctx:classgen_grammarParser.Definition_object_constantContext):
     new_node:cg_tree.symbol_node = self.open_node_from_path(ctx.identifier_ex())
     new_node.symbol_type = cg_tree.symbol_node_type.CONSTANT
-
+    
+    self.stack.push()
+    self.stack.tail().symbol_node = new_node
     super().visitDefinition_object_constant(ctx)
+    self.stack.pop()
     
   #
   #
@@ -74,7 +79,7 @@ class cg_reader_visitor(classgen_grammarVisitor):
 
     self.stack.push()
     self.stack.tail().symbol_node = new_node
-    super().visitDeclaration_object_implied_map(ctx)
+    super().visitDefinition_object_with_statement(ctx)
     self.stack.pop()
 
     
@@ -100,7 +105,28 @@ class cg_reader_visitor(classgen_grammarVisitor):
   #
   @override
   def visitDefinition_object_implied_map_case(self, ctx:classgen_grammarParser.Definition_object_implied_map_caseContext):
-    new_node:cg_tree.symbol_node = self.open_node_from_path(ctx.identifier_ex(), base_node=self.stack.tail().implied_map_context_node)
+    map_node:cg_tree.symbol_node = self.open_node_from_path(ctx.identifier_ex(), base_node=self.stack.tail().implied_map_context_node)
+
+    map_case:cg_map_case = cg_map_case()
+
+    map_case.src.type_t     = cg_typed_value_type.AUTO
+    map_case.src.content_t  = cg_typed_value_type.OBJECT
+    map_case.src.content    = self.stack.tail().symbol_node
+
+    map_case.dest.type_t    = cg_typed_value_type.AUTO
+    map_case.dest.content_t = cg_typed_value_type.NONE
+
+    value_ctx = ctx.definition_object_implied_map_to_value()
+    if value_ctx.identifier_pure():
+      map_case.dest.content_t = cg_typed_value_type.PATH
+      map_case.dest.content   = self.get_name_from_identifier_pure(value_ctx.identifier_pure())
+    elif value_ctx.mapping_value_constant():
+      map_case.dest.content_t = cg_typed_value_type.CONSTANT
+      map_case.dest.content   = value_ctx.mapping_value_constant().getText()
+
+    map_node.dangling_objects.append(map_case)
+    
+    super().visitDefinition_object_implied_map_case(ctx)
     
   #
   #

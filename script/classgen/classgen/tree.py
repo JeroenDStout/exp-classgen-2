@@ -43,7 +43,7 @@ class symbol_node():
   def to_big_string(self):
     ret = "[" + self.symbol_type.name + "] " + self.identifier
     if len(self.tags) > 0:
-      ret += " <" + ",".join(self.tags) + ">"
+      ret += " <" + ", ".join(self.tags) + ">"
     if self.symbol_target:
       symbol = self.symbol_target
       while symbol:
@@ -51,6 +51,8 @@ class symbol_node():
         symbol = symbol.symbol_target
     if self.payload:
       ret += "\n  # " + str(self.payload).replace("\n", "\n  ")
+    for obj in self.dangling_objects:
+      ret += "\n  ~ " + str(obj).replace("\n", "\n  ")
     for child in self.children:
       ret += "\n- " + child.to_big_string().replace("\n", "\n  ")
     return ret
