@@ -13,7 +13,7 @@ refl my_safety_check {
 
 enum my_enum {
   enum validity {
-    <refl safety_check>
+    <refl my_safety_check>
 
     with is_safe_to_continue  aka safe
     with get_warning_severity aka severity

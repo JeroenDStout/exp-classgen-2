@@ -1,34 +1,43 @@
 from __future__ import annotations
 from enum import Enum, auto
+import copy
 
 #
 #
 #
 class symbol_node_type(Enum):
-  NONE        = auto()
-  LOCAL_ALIAS = auto()
-  NAMESPACE   = auto()
-  REFL        = auto()
-  ENUM        = auto()
-  POD         = auto()
-  PROC        = auto()
-  TOKENS      = auto()
-  ARGS        = auto()
-  FN_MAP      = auto()
-  CONSTANT    = auto()
+  NONE         = auto()
+  ALIAS        = auto()
+  NAMESPACE    = auto()
+  REFL         = auto()
+  ENUM         = auto()
+  POD          = auto()
+  PROC         = auto()
+  TOKENS       = auto()
+  ARGS         = auto()
+  FN_MAP       = auto()
+  CONSTANT     = auto()
   
 class symbol_node():
   def __init__(self, parent_, identifier_:str):
     self.identifier:str               = identifier_
     self.payload                      = None
     self.tags:list[str]               = []
+    self.symbol_type:symbol_node_type = symbol_node_type.NONE
+    self.enter_secretly:bool          = False
 
     self.parent:symbol_node           = parent_
-    self.symbol_type:symbol_node_type = symbol_node_type.NONE
     self.symbol_target:symbol_node    = None
     self.children:list[symbol_node]   = []
-    self.enter_secretly:bool          = False
     self.dangling_objects:list        = []
+
+  def copy_very_shallow(self, parent):
+    ret = symbol_node(parent, self.identifier)
+    ret.identifier     = self.identifier
+    ret.tags           = copy.copy(self.tags)
+    ret.symbol_type    = self.symbol_type
+    ret.enter_secretly = self.enter_secretly
+    return ret
   
   def to_big_string(self):
     ret = "[" + self.symbol_type.name + "] " + self.identifier
@@ -56,6 +65,9 @@ class symbol_node():
   #
   #
   def resolve_path(self, path_name:list[str]):
+    if self.symbol_type == symbol_node_type.ALIAS:
+      return self.symbol_target.resolve_path(path_name)
+
     if len(path_name) == 0:
       return self
 
@@ -69,8 +81,8 @@ class symbol_node():
         result = child.resolve_path(path_name)
         if result:
           return result
-
-    return None
+          
+    return self.parent.resolve_path(path_name)
     
   #
   #

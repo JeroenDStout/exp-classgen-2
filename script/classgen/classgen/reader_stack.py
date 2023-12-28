@@ -7,7 +7,8 @@ from . import tree as cg_tree
 class cg_reader_stack():
   class cg_context():
     def __init__(self):
-      self.symbol_node:cg_tree.symbol_node = None
+      self.symbol_node:cg_tree.symbol_node              = None
+      self.implied_map_context_node:cg_tree.symbol_node = None
       
     def __str__(self):
       ret = "cg_context"

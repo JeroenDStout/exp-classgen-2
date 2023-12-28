@@ -26,6 +26,7 @@ class cg_reader_visitor(classgen_grammarVisitor):
 
     self.stack.push()
     self.stack.tail().symbol_node = new_node
+    self.stack.tail().implied_map_context_node = new_node
 
     super().visitTranslation_unit_object(ctx)
 
@@ -38,6 +39,8 @@ class cg_reader_visitor(classgen_grammarVisitor):
   def visitDefinition_object_constant(self, ctx:classgen_grammarParser.Definition_object_constantContext):
     new_node:cg_tree.symbol_node = self.open_node_from_path(ctx.identifier_ex())
     new_node.symbol_type = cg_tree.symbol_node_type.CONSTANT
+
+    super().visitDefinition_object_constant(ctx)
     
   #
   #
@@ -61,6 +64,18 @@ class cg_reader_visitor(classgen_grammarVisitor):
     new_node.enter_secretly = True
     super().visitDefinition_object_sbracket_list(ctx)
     self.stack.pop()
+    
+  #
+  #
+  #
+  @override
+  def visitDefinition_object_with_statement(self, ctx:classgen_grammarParser.Definition_object_with_statementContext):
+    new_node:cg_tree.symbol_node = self.open_node_from_path(ctx.identifier_ex())
+
+    self.stack.push()
+    self.stack.tail().symbol_node = new_node
+    super().visitDeclaration_object_implied_map(ctx)
+    self.stack.pop()
 
     
   #
@@ -78,7 +93,36 @@ class cg_reader_visitor(classgen_grammarVisitor):
     super().visitDeclaration_object_implied_map(ctx)
 
     self.stack.pop()
+
     
+  #
+  #
+  #
+  @override
+  def visitDefinition_object_implied_map_case(self, ctx:classgen_grammarParser.Definition_object_implied_map_caseContext):
+    new_node:cg_tree.symbol_node = self.open_node_from_path(ctx.identifier_ex(), base_node=self.stack.tail().implied_map_context_node)
+    
+  #
+  #
+  #
+  @override
+  def visitDefinition_meta_refl_statement(self, ctx:classgen_grammarParser.Definition_meta_refl_statementContext):
+    refl_source_path = self.get_name_from_identifier_pure(ctx.identifier_pure())
+    refl_source = self.stack.tail().symbol_node.resolve_path(refl_source_path)
+    self.duplicate_children_shallowly(refl_source, self.stack.tail().symbol_node)
+
+  #
+  #
+  #
+  def duplicate_children_shallowly(self, source:cg_tree.symbol_node, dest:cg_tree.symbol_node):
+    for child in source.children:
+      new_node:cg_tree.symbol_node = child.copy_very_shallow(dest)
+      dest.children.append(new_node)
+      for subchild in child.children:
+        sub_node = new_node.add_child(subchild.identifier)
+        sub_node.symbol_type = cg_tree.symbol_node_type.ALIAS
+        sub_node.symbol_target = subchild
+      
   #
   #
   #
@@ -105,21 +149,24 @@ class cg_reader_visitor(classgen_grammarVisitor):
   #
   #
   #
-  def open_node_from_path(self, ctx:classgen_grammarParser.Identifier_exContext):
+  def open_node_from_path(self, ctx:classgen_grammarParser.Identifier_exContext, base_node:cg_tree.symbol_node=None):
     real_node = None
+
+    if base_node == None:
+      base_node = self.stack.tail().symbol_node
 
     if ctx.identifier_pure():
       name      = self.get_name_from_identifier_pure(ctx.identifier_pure())
-      real_node = self.stack.tail().symbol_node.resolve_path_with_create(name)
+      real_node = base_node.resolve_path_with_create(name)
     elif ctx.identifier_with_alias():
       alias_ctx = ctx.identifier_with_alias()
       name      = self.get_name_from_identifier_pure(alias_ctx.identifier_pure())
-      real_node = self.stack.tail().symbol_node.resolve_path_with_create(name)
+      real_node = base_node.resolve_path_with_create(name)
       alias_list_ctx = alias_ctx.identifier_alias_list()
       for elem in alias_list_ctx.identifier_name():
         alias_name = self.get_name_from_identifier_name(elem)
-        node = self.stack.tail().symbol_node.resolve_path_with_create(alias_name)
-        if node.change_to_type_or_fail(cg_tree.symbol_node_type.LOCAL_ALIAS):
+        node = base_node.resolve_path_with_create(alias_name)
+        if node.change_to_type_or_fail(cg_tree.symbol_node_type.ALIAS):
           node.symbol_target = real_node
     else:
       name = [ "_ANONYMOUS_" ]
