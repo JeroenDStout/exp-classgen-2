@@ -6,6 +6,9 @@ packages_to_install = [
     [ sys.executable, "-m", "pip", "install", "antlr4-tools" ],
     [ "echo", "yes", "|", "antlr4" ],
     [ sys.executable, "-m", "pip", "install", "antlr4-python3-runtime" ]
+  ]],
+  [ 'overrides', [
+    [ sys.executable, "-m", "pip", "install", "overrides" ],
   ]]
 ]
 install_all         = False

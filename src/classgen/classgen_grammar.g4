@@ -44,10 +44,11 @@ TOKEN_TRUE      : 'true'  ;
 TOKEN_FALSE     : 'false' ;
 
 // types
-KEYWORD_REFL    : 'refl'  ;
-KEYWORD_POD     : 'pod'   ;
-KEYWORD_ENUM    : 'enum'  ;
-KEYWORD_PROC    : 'proc'  ;
+TYPEWORD_REFL   : 'refl'   ;
+TYPEWORD_POD    : 'pod'    ;
+TYPEWORD_ENUM   : 'enum'   ;
+TYPEWORD_PROC   : 'proc'   ;
+TYPEWORD_TOKENS : 'tokens' ;
 
 IDENTIFIER_LIKE_INTRINSIC_INT
     : ('i' | 'u') FRAG_DEC_NAT_NUMBER FRAG_NONDIGIT (FRAG_NONDIGIT | FRAG_DIGIT)*
@@ -140,8 +141,12 @@ constant_integer
 //      identifiers
 // ------------------------------
     
+identifier_id
+    : IDENTIFIER
+    ;
+    
 identifier_name
-    : identifier_namespace_pre? IDENTIFIER
+    : identifier_namespace_pre? identifier_id
     ;
     
 identifier_pure
@@ -154,7 +159,7 @@ identifier_ex
     ;
     
 identifier_with_alias
-    : identifier_name identifier_postfix? KEYWORD_AKA identifier_alias_list
+    : identifier_pure KEYWORD_AKA identifier_alias_list
     ;
     
 identifier_alias_list
@@ -178,7 +183,7 @@ identifier_namespace_list
     ;
     
 identifier_namespace_list_element
-    : IDENTIFIER
+    : identifier_id
     | TOKEN_DDOT
     ;
 
@@ -187,7 +192,11 @@ identifier_namespace_list_element
 // ------------------------------
 
 object_type
-  : KEYWORD_REFL | KEYWORD_ENUM | KEYWORD_POD | KEYWORD_PROC
+  : t=TYPEWORD_REFL
+  | t=TYPEWORD_ENUM
+  | t=TYPEWORD_POD
+  | t=TYPEWORD_PROC
+  | t=TYPEWORD_TOKENS
   ;
 
 definition_object
@@ -211,9 +220,9 @@ definition_object_element
   : definition_object_abracket_list
   | definition_object_sbracket_list
   | definition_object_with_statement
-  | definition_object_identifier
-  | definition_object_implied_map
+  | definition_object_constant
   | definition_object
+  | declaration_object_implied_map
   ;
 
 definition_object_meta
@@ -223,17 +232,17 @@ definition_object_meta
   | definition_meta_refl_statement
   ;
 
-definition_object_identifier
-  : identifier_ex definition_object_identifier_postlist?
+definition_object_constant
+  : identifier_ex definition_object_constant_postlist?
   ;
 
-definition_object_identifier_postlist
-  : definition_object_identifier_postlist_elem+
+definition_object_constant_postlist
+  : definition_object_identifier_constant_elem+
   ;
 
-definition_object_identifier_postlist_elem
-  : TOKEN_ROUND_LH definition_object_identifier_postlist TOKEN_ROUND_RH
-  | definition_object_implied_map
+definition_object_identifier_constant_elem
+  : TOKEN_ROUND_LH definition_object_constant_postlist TOKEN_ROUND_RH
+  | definition_object_implied_map_case
   ;
   
 definition_object_sbracket_list
@@ -248,8 +257,12 @@ definition_object_with_statement
   : KEYWORD_WITH identifier_ex
   ;
 
-definition_object_implied_map
+declaration_object_implied_map
   : identifier_ex TOKEN_IPLMAP_RW definition_object_implied_map_to_value definition_object_implied_map_default?
+  ;
+
+definition_object_implied_map_case
+  : identifier_ex TOKEN_IPLMAP_RW definition_object_implied_map_to_value
   ;
 
 definition_object_implied_map_to_value
@@ -276,7 +289,7 @@ definition_meta_for_statement
   ;
 
 definition_meta_refl_statement
-  : KEYWORD_REFL identifier_pure
+  : TYPEWORD_REFL identifier_pure
   ;
 
 mapping_value
