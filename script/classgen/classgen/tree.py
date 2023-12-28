@@ -8,6 +8,7 @@ import copy
 class symbol_node_type(Enum):
   NONE         = auto()
   ALIAS        = auto()
+  ALIAS_LOCAL  = auto()
   NAMESPACE    = auto()
   REFL         = auto()
   ENUM         = auto()
@@ -44,7 +45,10 @@ class symbol_node():
     if len(self.tags) > 0:
       ret += " <" + ",".join(self.tags) + ">"
     if self.symbol_target:
-      ret += "\n  @ ::" + "::".join(self.symbol_target.get_canonical_path())
+      symbol = self.symbol_target
+      while symbol:
+        ret += "\n  @ ::" + "::".join(symbol.get_canonical_path())
+        symbol = symbol.symbol_target
     if self.payload:
       ret += "\n  # " + str(self.payload).replace("\n", "\n  ")
     for child in self.children:
@@ -64,25 +68,27 @@ class symbol_node():
   #
   #
   #
-  def resolve_path(self, path_name:list[str]):
+  def resolve_path(self, path_name:list[str], follow_alias_local=True):
     if self.symbol_type == symbol_node_type.ALIAS:
-      return self.symbol_target.resolve_path(path_name)
+      return self.symbol_target.resolve_path(path_name, follow_alias_local)
+    if follow_alias_local and self.symbol_type == symbol_node_type.ALIAS_LOCAL:
+      return self.symbol_target.resolve_path(path_name, follow_alias_local)
 
     if len(path_name) == 0:
       return self
 
     if path_name[0] == "..":
-      return self.parent.resolve_path(path_name[1:])
+      return self.parent.resolve_path(path_name[1:], False)
 
     for child in self.children:
       if path_name[0] == child.identifier:
-        return child.resolve_path_with_create(path_name[1:])
+        return child.resolve_path(path_name[1:], False)
       if child.enter_secretly:
-        result = child.resolve_path(path_name)
+        result = child.resolve_path(path_name, False)
         if result:
           return result
           
-    return self.parent.resolve_path(path_name)
+    return self.parent.resolve_path(path_name, follow_alias_local)
     
   #
   #

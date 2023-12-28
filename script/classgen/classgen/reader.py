@@ -116,7 +116,18 @@ class cg_reader_visitor(classgen_grammarVisitor):
   #
   def duplicate_children_shallowly(self, source:cg_tree.symbol_node, dest:cg_tree.symbol_node):
     for child in source.children:
+      if child.symbol_type in [ cg_tree.symbol_node_type.ALIAS_LOCAL ]:
+        continue
+
+      if child.symbol_type not in [ cg_tree.symbol_node_type.FN_MAP ]:
+        sub_node = dest.add_child(child.identifier)
+        sub_node.symbol_type = cg_tree.symbol_node_type.ALIAS
+        sub_node.tags.append("inherited")
+        sub_node.symbol_target = child
+        continue
+          
       new_node:cg_tree.symbol_node = child.copy_very_shallow(dest)
+      new_node.tags.append("inherited")
       dest.children.append(new_node)
       for subchild in child.children:
         sub_node = new_node.add_child(subchild.identifier)
@@ -166,7 +177,7 @@ class cg_reader_visitor(classgen_grammarVisitor):
       for elem in alias_list_ctx.identifier_name():
         alias_name = self.get_name_from_identifier_name(elem)
         node = base_node.resolve_path_with_create(alias_name)
-        if node.change_to_type_or_fail(cg_tree.symbol_node_type.ALIAS):
+        if node.change_to_type_or_fail(cg_tree.symbol_node_type.ALIAS_LOCAL):
           node.symbol_target = real_node
     else:
       name = [ "_ANONYMOUS_" ]
@@ -179,7 +190,7 @@ class cg_reader_visitor(classgen_grammarVisitor):
   def get_name_from_identifier_name(self, ctx:classgen_grammarParser.Identifier_nameContext):
      name = ctx.identifier_id().getText()
      if ctx.identifier_namespace_pre():
-       return [ ctx.identifier_namespace_pre().getText().split("::"), name ]
+       return ctx.identifier_namespace_pre().getText().split("::")[:-1] + [ name ]
      return [ name ]
     
   #
@@ -189,7 +200,7 @@ class cg_reader_visitor(classgen_grammarVisitor):
      path = self.get_name_from_identifier_name(ctx.identifier_name())
      if ctx.identifier_postfix() and ctx.identifier_postfix().identifier_namespace_post():
        post_ctx = ctx.identifier_postfix().identifier_namespace_post()
-       path = post_ctx.identifier_namespace_list().getText().split("::") + path
+       path = post_ctx.identifier_namespace_list().getText().split("::") + [ path ]
      return path
     
   #
