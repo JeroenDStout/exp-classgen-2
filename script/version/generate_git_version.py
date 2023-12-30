@@ -48,6 +48,8 @@ for (gid, desc, date, info, msg) in allLines:
                  for x in branchInfo if     not x.startswith('origin')
                                         and not x.startswith('tag:')
                                         and not x == 'release'
+               ] + [ x.replace('origin/', '').strip()
+                 for x in branchInfo if x.startswith('origin/')
                ]
   
   # If we are out of detail lines, skip if there is no important information
