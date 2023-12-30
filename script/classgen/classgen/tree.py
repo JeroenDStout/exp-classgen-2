@@ -11,6 +11,7 @@ class symbol_node_type(Enum):
   ALIAS_LOCAL  = auto()
   NAMESPACE    = auto()
   REFL         = auto()
+  LINK         = auto()
   ENUM         = auto()
   POD          = auto()
   PROC         = auto()
@@ -119,3 +120,27 @@ class symbol_node():
       return True
     print ("ERRR")
     return False
+  
+
+class visit_symbol_nodes:
+  def __iter__(self, starting_node):
+    self.stack = [[starting_node, -1]]
+    return self
+
+  def __next__(self):
+    last_elem = self.stack[-1]
+    if last_elem[1] == -1:
+      last_elem[1] += 1
+      return last_elem[0]
+    
+    while len(last_elem[0].children) <= last_elem[1]:
+      if len(self.stack) == 1:
+        raise StopIteration
+      
+      self.stack.pop()
+      last_elem = self.stack[-1]
+
+    next_node = last_elem[0].children[last_elem[1]]
+    last_elem[1] += 1
+      
+    return next_node

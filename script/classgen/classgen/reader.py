@@ -4,6 +4,7 @@ from classgen_grammarParser  import classgen_grammarParser
 from classgen_grammarVisitor import classgen_grammarVisitor
 from .               import tree            as cg_tree
 from .reader_stack   import cg_reader_stack
+from .types_abstract import cg_typed_value
 from .types_abstract import cg_typed_value_type
 from .types_builtin  import cg_map_case
     
@@ -134,8 +135,16 @@ class cg_reader_visitor(classgen_grammarVisitor):
   @override
   def visitDefinition_meta_refl_statement(self, ctx:classgen_grammarParser.Definition_meta_refl_statementContext):
     refl_source_path = self.get_name_from_identifier_pure(ctx.identifier_pure())
-    refl_source = self.stack.tail().symbol_node.resolve_path(refl_source_path)
-    self.duplicate_children_shallowly(refl_source, self.stack.tail().symbol_node)
+    
+    new_node:cg_tree.symbol_node =self.stack.tail().symbol_node.resolve_path_with_create([ "~refl" ])
+    new_node.symbol_type = cg_tree.symbol_node_type.LINK
+    
+    link:cg_typed_value() = cg_typed_value()
+    link.type_t    = cg_typed_value_type.AUTO
+    link.content_t = cg_typed_value_type.PATH
+    link.content   = refl_source_path
+
+    new_node.dangling_objects.append(link)
 
   #
   #
