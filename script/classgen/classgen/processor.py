@@ -26,7 +26,7 @@ class cg_processor():
     dirty_nodes:list[cg_tree.symbol_node] = [ node for node in cg_tree.visit_symbol_nodes(self.trunk) if node.symbol_type == cg_tree.symbol_node_type.LINK ]
     dirty_nodes = self.try_repeat_resolve(dirty_nodes, self.process_links_in_node)
     if len(dirty_nodes):
-      print("ERR process_links")
+      print("ERROR: Could not complete process_links")
       
   def process_links_in_node(self, node:cg_tree.symbol_node):
     if node.symbol_type != cg_tree.symbol_node_type.LINK:
@@ -41,9 +41,12 @@ class cg_processor():
         all_succeeded = False
         continue
       
-      new_nodes += self.duplicate_children_shallowly(obj.content, node.parent)
+      new_nodes += self.process_node_link(obj.content, node.parent)
       
     return all_succeeded, new_nodes
+      
+  def process_node_link(self, src:cg_tree.symbol_node, dest:cg_tree.symbol_node):
+    return self.duplicate_children_shallowly(src, dest)
     
   #
   #
@@ -52,7 +55,7 @@ class cg_processor():
     dirty_nodes:list[cg_tree.symbol_node] = [ node for node in cg_tree.visit_symbol_nodes(self.trunk) if node.symbol_type == cg_tree.symbol_node_type.ALIAS_LOCAL ]
     dirty_nodes = self.try_repeat_resolve(dirty_nodes, self.process_local_alias_of_node)
     if len(dirty_nodes):
-      print("ERR process_local_aliases")
+      print("ERROR: Could not complete process_local_aliases")
       
   def process_local_alias_of_node(self, node:cg_tree.symbol_node):
     if node.symbol_type != cg_tree.symbol_node_type.ALIAS_LOCAL:
@@ -105,11 +108,21 @@ class cg_processor():
     
     while len(dirty_nodes) and any_resolved:
       any_resolved = False
+      next_dirty_nodes = []
       iterations += 1
       
-      if iterations > 10:
-        print("ERR")
-        return dirty_nodes
+      # debug
+      #print("[" + str(iterations) + "]")
+      #for node in dirty_nodes:
+      #  print("Dirty " + "::".join(node.get_canonical_path()))
+      #  print("      " + node.to_big_string().replace("\n", "\n      "))
+      #
+      #if iterations > 10:
+      #  print("ERROR: try_repeat_resolve ran out of iterations")
+      #  for node in dirty_nodes:
+      #    print("See ::" + "::".join(node.get_canonical_path()))
+      #    print("      " + node.to_big_string().replace("\n", "\n      "))
+      #  return dirty_nodes
       
       for node in dirty_nodes:
         all_resolved_in_node, new_nodes = fn_try_resolve(node)
@@ -122,7 +135,10 @@ class cg_processor():
         any_resolved = True
       
       if not any_resolved:
-        print("Uh oh")
+        print("ERROR: try_repeat_resolve could not resolve any node in iteration")
+        for node in next_dirty_nodes:
+          print("See ::" + "::".join(node.get_canonical_path()))
+          print("      " + node.to_big_string().replace("\n", "\n      "))
         return next_dirty_nodes
 
       dirty_nodes = next_dirty_nodes
@@ -146,6 +162,8 @@ class cg_processor():
       typed_value.content_t = cg_typed_value_type.OBJECT
       typed_value.content   = obj
       return True
+    
+    return True
     
 
     
