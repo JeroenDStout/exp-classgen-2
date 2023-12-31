@@ -19,6 +19,7 @@ setup_project_source(classgen "core/classgen"
     classgen/reader_stack.py
     classgen/writer.py
     classgen/processor.py
+    classgen/processor_cpp.py
     classgen/types_abstract.py
     classgen/types_builtin.py
     classgen/tree.py
