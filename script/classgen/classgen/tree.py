@@ -32,14 +32,6 @@ class symbol_node():
     self.symbol_target:symbol_node    = None
     self.children:list[symbol_node]   = []
     self.dangling_objects:list        = []
-
-  def copy_very_shallow(self, parent):
-    ret = symbol_node(parent, self.identifier)
-    ret.identifier     = self.identifier
-    ret.tags           = copy.copy(self.tags)
-    ret.symbol_type    = self.symbol_type
-    ret.enter_secretly = self.enter_secretly
-    return ret
   
   def to_big_string(self):
     ret = "[" + self.symbol_type.name + "] " + self.identifier
@@ -62,6 +54,9 @@ class symbol_node():
     node:symbol_node = symbol_node(self, identifier)
     self.children.append(node)
     return node
+  
+  def ensure_child(self, identifier:str):
+    return self.resolve_path_with_create([ identifier ])
 
   def get_canonical_path(self):
     if not self.parent:
@@ -71,26 +66,29 @@ class symbol_node():
   #
   #
   #
-  def resolve_path(self, path_name:list[str], follow_alias_local=True):
+  def resolve_path(self, path_name:list[str], follow_alias_local=True, allow_auto_parent=True):
     if self.symbol_type == symbol_node_type.ALIAS:
-      return self.symbol_target.resolve_path(path_name, follow_alias_local)
+      return self.symbol_target.resolve_path(path_name, follow_alias_local, allow_auto_parent)
     if follow_alias_local and self.symbol_type == symbol_node_type.ALIAS_LOCAL:
-      return self.symbol_target.resolve_path(path_name, follow_alias_local)
+      return self.symbol_target.resolve_path(path_name, follow_alias_local, allow_auto_parent)
 
     if len(path_name) == 0:
       return self
 
     if path_name[0] == "..":
-      return self.parent.resolve_path(path_name[1:], False)
+      return self.parent.resolve_path(path_name[1:], False, allow_auto_parent)
 
     for child in self.children:
       if path_name[0] == child.identifier:
-        return child.resolve_path(path_name[1:], False)
+        return child.resolve_path(path_name[1:], False, False)
       if child.enter_secretly:
-        result = child.resolve_path(path_name, False)
+        result = child.resolve_path(path_name, False, False)
         if result:
           return result
           
+    if not allow_auto_parent:
+      return None
+
     return self.parent.resolve_path(path_name, follow_alias_local)
     
   #
@@ -120,27 +118,17 @@ class symbol_node():
       return True
     print ("ERRR")
     return False
+    
+  #
+  #
+  #
+  def add_nodes_to_list_recursively(self, ref_list:list[symbol_node]):
+    ref_list.append(self)
+    for child in self.children:
+      child.add_nodes_to_list_recursively(ref_list)
   
 
-class visit_symbol_nodes:
-  def __iter__(self, starting_node):
-    self.stack = [[starting_node, -1]]
-    return self
-
-  def __next__(self):
-    last_elem = self.stack[-1]
-    if last_elem[1] == -1:
-      last_elem[1] += 1
-      return last_elem[0]
-    
-    while len(last_elem[0].children) <= last_elem[1]:
-      if len(self.stack) == 1:
-        raise StopIteration
-      
-      self.stack.pop()
-      last_elem = self.stack[-1]
-
-    next_node = last_elem[0].children[last_elem[1]]
-    last_elem[1] += 1
-      
-    return next_node
+def visit_symbol_nodes(starting_node:symbol_node):
+  yield starting_node
+  for child in starting_node.children:
+    yield from visit_symbol_nodes(child)

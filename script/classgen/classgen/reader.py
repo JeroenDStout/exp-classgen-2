@@ -145,29 +145,6 @@ class cg_reader_visitor(classgen_grammarVisitor):
     link.content   = refl_source_path
 
     new_node.dangling_objects.append(link)
-
-  #
-  #
-  #
-  def duplicate_children_shallowly(self, source:cg_tree.symbol_node, dest:cg_tree.symbol_node):
-    for child in source.children:
-      if child.symbol_type in [ cg_tree.symbol_node_type.ALIAS_LOCAL ]:
-        continue
-
-      if child.symbol_type not in [ cg_tree.symbol_node_type.FN_MAP ]:
-        sub_node = dest.add_child(child.identifier)
-        sub_node.symbol_type = cg_tree.symbol_node_type.ALIAS
-        sub_node.tags.append("inherited")
-        sub_node.symbol_target = child
-        continue
-          
-      new_node:cg_tree.symbol_node = child.copy_very_shallow(dest)
-      new_node.tags.append("inherited")
-      dest.children.append(new_node)
-      for subchild in child.children:
-        sub_node = new_node.add_child(subchild.identifier)
-        sub_node.symbol_type = cg_tree.symbol_node_type.ALIAS
-        sub_node.symbol_target = subchild
       
   #
   #
