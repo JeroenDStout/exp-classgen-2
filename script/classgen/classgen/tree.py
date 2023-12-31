@@ -58,6 +58,15 @@ class symbol_node():
   
   def ensure_child(self, identifier:str):
     return self.resolve_path_with_create([ identifier ])
+  
+  def remove_child(self, child:symbol_node):
+    self.children.remove(child)
+  
+  def change_parent(self, new_parent:symbol_node):
+    if self.parent:
+      self.parent.remove_child(self)
+    new_parent.children.append(self)
+    self.parent = new_parent
 
   def get_canonical_path(self):
     if not self.parent:

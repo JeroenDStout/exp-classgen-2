@@ -19,6 +19,7 @@ class cg_processor():
     self.preprocess()
     self.process_links()
     self.process_local_aliases()
+    self.postprocess()
     
   #
   #
@@ -84,6 +85,22 @@ class cg_processor():
     
     node.symbol_target.dangling_objects.extend(node.dangling_objects)
     node.dangling_objects = []
+    return True, []
+    
+  #
+  #
+  #
+  def postprocess(self):
+    dirty_nodes:list[cg_tree.symbol_node] = [ node for node in cg_tree.visit_symbol_nodes(self.trunk) ]
+    dirty_nodes = self.try_repeat_resolve(dirty_nodes, self.postprocess_node)
+    if len(dirty_nodes):
+      print("ERROR: Could not complete postprocess")
+      
+  def postprocess_node(self, node:cg_tree.symbol_node):
+    all_success, new_nodes = self.postprocess_node_specific(node)
+    return all_success, new_nodes
+      
+  def postprocess_node_specific(self, node:cg_tree.symbol_node):
     return True, []
   
   #

@@ -9,7 +9,10 @@ from .types_builtin  import cg_map_case
 class cg_processor_cpp(cg_processor):
   def __init__(self, trunk:cg_tree.symbol_node):
     super().__init__(trunk)
-      
+
+  #
+  #
+  #
   @override
   def preprocess_node_specific(self, node:cg_tree.symbol_node):
     if "gaos" in node.tags:
@@ -42,3 +45,31 @@ class cg_processor_cpp(cg_processor):
       child.tags += [ "gaos__refl_t", "impl_defined" ]
 
     return True, added
+
+  #
+  #
+  #
+  @override
+  def postprocess_node_specific(self, node:cg_tree.symbol_node):
+    if node.symbol_type == cg_tree.symbol_node_type.ENUM:
+      return self.postprocess_node_specific_enum(node)
+    return True, []
+  
+  def postprocess_node_specific_enum(self, node:cg_tree.symbol_node):
+    print("postprocess_node_specific_enum " + node.identifier)
+
+    objects_to_be_moved = [ obj for obj in node.children if obj.identifier != "~tokens" ]
+    if not len(objects_to_be_moved):
+      return True, []
+
+    enum_ns = node.parent.ensure_child("enum_" + node.identifier)
+    enum_ns.change_to_type_or_fail(cg_tree.symbol_node_type.NAMESPACE)
+    if not "cpp_split" in enum_ns.tags:
+      enum_ns.tags.append("cpp_split")
+    enum_ns.symbol_target = node
+    
+    for obj in objects_to_be_moved:
+      print("  " + obj.identifier + " -> " + enum_ns.identifier)
+      obj.change_parent(enum_ns)
+
+    return True, [ node, enum_ns ] + objects_to_be_moved
