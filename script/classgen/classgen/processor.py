@@ -17,6 +17,7 @@ class cg_processor():
 
   def process(self):
     self.process_links()
+    self.process_local_aliases()
     
   #
   #
@@ -24,6 +25,8 @@ class cg_processor():
   def process_links(self):
     dirty_nodes:list[cg_tree.symbol_node] = [ node for node in cg_tree.visit_symbol_nodes(self.trunk) if node.symbol_type == cg_tree.symbol_node_type.LINK ]
     dirty_nodes = self.try_repeat_resolve(dirty_nodes, self.process_links_in_node)
+    if len(dirty_nodes):
+      print("ERR process_links")
       
   def process_links_in_node(self, node:cg_tree.symbol_node):
     if node.symbol_type != cg_tree.symbol_node_type.LINK:
@@ -40,9 +43,28 @@ class cg_processor():
       
       new_nodes += self.duplicate_children_shallowly(obj.content, node.parent)
       
-    print(new_nodes)
-
-    return all_succeeded, []
+    return all_succeeded, new_nodes
+    
+  #
+  #
+  #
+  def process_local_aliases(self):
+    dirty_nodes:list[cg_tree.symbol_node] = [ node for node in cg_tree.visit_symbol_nodes(self.trunk) if node.symbol_type == cg_tree.symbol_node_type.ALIAS_LOCAL ]
+    dirty_nodes = self.try_repeat_resolve(dirty_nodes, self.process_local_alias_of_node)
+    if len(dirty_nodes):
+      print("ERR process_local_aliases")
+      
+  def process_local_alias_of_node(self, node:cg_tree.symbol_node):
+    if node.symbol_type != cg_tree.symbol_node_type.ALIAS_LOCAL:
+      return True, []
+    
+    if not node.symbol_target:
+      print("no symbol target??")
+      return True, []
+    
+    node.symbol_target.dangling_objects.extend(node.dangling_objects)
+    node.dangling_objects = []
+    return True, []
   
   #
   #
@@ -57,8 +79,6 @@ class cg_processor():
       sub_node = dest.ensure_child(child.identifier)
       new_nodes.append(sub_node)
       sub_node.tags.append("inherited")
-      
-      print(sub_node.get_canonical_path())
         
       if child.symbol_type not in [ cg_tree.symbol_node_type.FN_MAP ]:
         sub_node.change_to_type_or_fail(cg_tree.symbol_node_type.ALIAS)
@@ -106,6 +126,8 @@ class cg_processor():
         return next_dirty_nodes
 
       dirty_nodes = next_dirty_nodes
+      
+    return []
   
   #
   #
