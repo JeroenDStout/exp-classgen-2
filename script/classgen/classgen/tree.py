@@ -40,8 +40,10 @@ class symbol_node():
       ret += " <" + ", ".join(self.tags) + ">"
     if self.symbol_target:
       symbol = self.symbol_target
+      depth:int = 0
       while symbol:
-        ret += "\n  @ ::" + "::".join(symbol.get_canonical_path())
+        ret += "\n  " + ("-"*depth) + "@ ::" + "::".join(symbol.get_canonical_path())
+        depth += 1
         symbol = symbol.symbol_target
     if self.payload:
       ret += "\n  # " + str(self.payload).replace("\n", "\n  ")

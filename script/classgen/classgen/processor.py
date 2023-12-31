@@ -103,6 +103,27 @@ class cg_processor():
   def postprocess_node_specific(self, node:cg_tree.symbol_node):
     return True, []
   
+  def split_node_to_namespace_by_identifiers(self, node:cg_tree.symbol_node, split_tag:str, split_prefix:str, fn_choose):
+    objects_to_be_moved = [ obj for obj in node.children if not obj.enter_secretly and fn_choose(obj) ]
+    if not len(objects_to_be_moved):
+      return []
+
+    namespace = node.parent.ensure_child(split_prefix + node.identifier)
+    namespace.change_to_type_or_fail(cg_tree.symbol_node_type.NAMESPACE)
+    if not split_tag in namespace.tags:
+      namespace.tags.append(split_tag)
+    namespace.symbol_target = node
+    
+    for obj in objects_to_be_moved:
+      obj.change_parent(namespace)
+      
+    split_node = node.ensure_child("~" + split_tag)
+    split_node.change_to_type_or_fail(cg_tree.symbol_node_type.ALIAS)
+    split_node.enter_secretly = True
+    split_node.symbol_target = namespace
+
+    return [ node, split_node, namespace ] + objects_to_be_moved
+  
   #
   #
   #

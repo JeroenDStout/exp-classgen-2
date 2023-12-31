@@ -53,23 +53,20 @@ class cg_processor_cpp(cg_processor):
   def postprocess_node_specific(self, node:cg_tree.symbol_node):
     if node.symbol_type == cg_tree.symbol_node_type.ENUM:
       return self.postprocess_node_specific_enum(node)
+    if node.symbol_type == cg_tree.symbol_node_type.FN:
+      return self.postprocess_node_specific_fn_map(node)
+    if node.symbol_type == cg_tree.symbol_node_type.FN_MAP:
+      return self.postprocess_node_specific_fn_map(node)
     return True, []
   
   def postprocess_node_specific_enum(self, node:cg_tree.symbol_node):
-    print("postprocess_node_specific_enum " + node.identifier)
-
-    objects_to_be_moved = [ obj for obj in node.children if obj.identifier != "~tokens" ]
-    if not len(objects_to_be_moved):
-      return True, []
-
-    enum_ns = node.parent.ensure_child("enum_" + node.identifier)
-    enum_ns.change_to_type_or_fail(cg_tree.symbol_node_type.NAMESPACE)
-    if not "cpp_split" in enum_ns.tags:
-      enum_ns.tags.append("cpp_split")
-    enum_ns.symbol_target = node
-    
-    for obj in objects_to_be_moved:
-      print("  " + obj.identifier + " -> " + enum_ns.identifier)
-      obj.change_parent(enum_ns)
-
-    return True, [ node, enum_ns ] + objects_to_be_moved
+    moved_obj = self.split_node_to_namespace_by_identifiers(node, "cpp_split", "enum_", lambda obj : obj.identifier != "~tokens")
+    return True, moved_obj
+  
+  def postprocess_node_specific_fn_map(self, node:cg_tree.symbol_node):
+    moved_obj = self.split_node_to_namespace_by_identifiers(node, "cpp_split", "fn_", lambda obj : True)
+    return True, moved_obj
+  
+  def postprocess_node_specific_fn_map(self, node:cg_tree.symbol_node):
+    moved_obj = self.split_node_to_namespace_by_identifiers(node, "cpp_split", "fn_map_", lambda obj : True)
+    return True, moved_obj
