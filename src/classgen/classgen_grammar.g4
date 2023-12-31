@@ -277,7 +277,7 @@ definition_object_implied_map_default
   ;
 
 definition_meta_tag_statement
-  : KEYWORD_TAG IDENTIFIER
+  : KEYWORD_TAG identifier_id+
   ;
 
 definition_meta_template_statement

@@ -128,7 +128,14 @@ class cg_reader_visitor(classgen_grammarVisitor):
     map_node.dangling_objects.append(map_case)
     
     super().visitDefinition_object_implied_map_case(ctx)
-    
+  #
+  #
+  #
+  @override
+  def visitDefinition_meta_tag_statement(self, ctx:classgen_grammarParser.Definition_meta_tag_statementContext):
+    for identifier in ctx.identifier_id():
+      self.stack.tail().symbol_node.tags.append(identifier.getText())
+  
   #
   #
   #
@@ -143,7 +150,6 @@ class cg_reader_visitor(classgen_grammarVisitor):
     link.type_t    = cg_typed_value_type.AUTO
     link.content_t = cg_typed_value_type.PATH
     link.content   = refl_source_path
-
     new_node.dangling_objects.append(link)
       
   #
