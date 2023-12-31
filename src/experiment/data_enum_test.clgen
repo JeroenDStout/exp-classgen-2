@@ -35,7 +35,6 @@ enum my_enum {
 }
 
 pod my_pod {
-  <refl gaos__refl_t>
 }
 
 proc my_proc {

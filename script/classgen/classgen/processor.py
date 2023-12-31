@@ -16,8 +16,25 @@ class cg_processor():
     self.trunk.add_nodes_to_list_recursively(self.next_dirty_nodes)
 
   def process(self):
+    self.preprocess()
     self.process_links()
     self.process_local_aliases()
+    
+  #
+  #
+  #
+  def preprocess(self):
+    dirty_nodes:list[cg_tree.symbol_node] = [ node for node in cg_tree.visit_symbol_nodes(self.trunk) ]
+    dirty_nodes = self.try_repeat_resolve(dirty_nodes, self.preprocess_node)
+    if len(dirty_nodes):
+      print("ERROR: Could not complete preprocess")
+      
+  def preprocess_node(self, node:cg_tree.symbol_node):
+    all_success, new_nodes = self.preprocess_node_specific(node)
+    return all_success, new_nodes
+      
+  def preprocess_node_specific(self, node:cg_tree.symbol_node):
+    return True, []
     
   #
   #
@@ -83,7 +100,7 @@ class cg_processor():
       new_nodes.append(sub_node)
       sub_node.tags.append("inherited")
         
-      if child.symbol_type not in [ cg_tree.symbol_node_type.FN_MAP ]:
+      if child.symbol_type not in [ cg_tree.symbol_node_type.FN, cg_tree.symbol_node_type.FN_MAP ]:
         sub_node.change_to_type_or_fail(cg_tree.symbol_node_type.ALIAS)
         sub_node.symbol_target = child
         continue

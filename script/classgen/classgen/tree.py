@@ -17,6 +17,7 @@ class symbol_node_type(Enum):
   PROC         = auto()
   TOKENS       = auto()
   ARGS         = auto()
+  FN           = auto()
   FN_MAP       = auto()
   CONSTANT     = auto()
   
