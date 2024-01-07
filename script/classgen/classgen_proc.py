@@ -15,6 +15,8 @@ from classgen import debug         as cg_debug
 from classgen import reader        as cg_reader
 from classgen import processor     as cg_processor
 from classgen import processor_cpp as cg_processor_cpp
+from classgen import writer        as cg_writer
+from classgen import writer_cpp    as cg_writer_cpp
 
 sys_arg = {}
 for arg in sys.argv[2:]:
@@ -41,13 +43,21 @@ parser = classgen_grammarParser(stream)
 
 tree    = parser.prog()
 
-#debug
+# debug
 #visitor = cg_debug.classgen_debug_visitor(parser)
 #visitor.visit(tree)
 
 visitor = cg_reader.cg_reader_visitor(parser)
 visitor.visit(tree)
+# debug
+#print(visitor.trunk.to_big_string())
 
 processor = cg_processor_cpp.cg_processor_cpp(visitor.trunk)
 processor.process()
-print(processor.trunk.to_big_string())
+# debug
+#print(processor.trunk.to_big_string())
+
+writer = cg_writer_cpp.cg_writer_cpp(processor.trunk)
+if "out_decl_h" in sys_arg: writer.write_decl_h(sys_arg["out_decl_h"], sys_arg["proj"], sys_arg["obj"])
+if "out_impl_h" in sys_arg: writer.write_impl_h(sys_arg["out_impl_h"], sys_arg["proj"], sys_arg["obj"])
+if "out_cpp"    in sys_arg: writer.write_cpp(   sys_arg["out_cpp"   ], sys_arg["proj"], sys_arg["obj"])

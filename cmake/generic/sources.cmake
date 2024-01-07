@@ -13,6 +13,7 @@ macro(init_directory name)
   message(STATUS "-- ${name}")
   
   file(RELATIVE_PATH dir_src_rel ${cmake_root_dir} ${CMAKE_CURRENT_SOURCE_DIR})
+  get_filename_component(proj_dir_name ${CMAKE_CURRENT_SOURCE_DIR} NAME)
   string(REGEX REPLACE "src*" "include" dir_include_rel ${dir_src_rel})
   string(REGEX REPLACE "src*" "script"  dir_script_rel  ${dir_src_rel})
   

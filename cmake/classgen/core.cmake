@@ -35,11 +35,13 @@ function(classgen_proc_single_cxx source
     COMMAND           ${Python3_EXECUTABLE}
                       "${classgen_can_script}/classgen_proc.py"
                       "${classgen_gen_script}/antlr"
+                      "proj:${proj_dir_name}"
+                      "obj:${base_out_name}"
                       "in:${source}"
                       "out_cpp:${abs_gen_src}/${destination_cpp}/${base_out_name}.cpp"
                       "out_decl_h:${abs_gen_include}/${destination_h}/${base_out_name}_decl.h"
                       "out_impl_h:${abs_gen_include}/${destination_h}/${base_out_name}_impl.h"
-    DEPENDS           ${classgen_script_dir}/classgen_proc.py
+    DEPENDS           ${classgen_can_script}/classgen_proc.py
                       ${source}
     WORKING_DIRECTORY "${abs_gen_include}/${destination}/"
     VERBATIM
