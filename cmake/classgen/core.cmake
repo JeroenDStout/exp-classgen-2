@@ -28,7 +28,7 @@ function(classgen_proc_single_cxx source
   message(STATUS " - ${destination_h}/${base_out_name}_impl.h")
   
   add_custom_command(
-    COMMENT           "Classgen: ${source} -> ${abs_gen_include}/${destination}/${base_out_name}.h"
+    COMMENT           "Classgen: ${source_relpath}"
     OUTPUT            "${abs_gen_src}/${destination_cpp}/${base_out_name}.cpp"
                       "${abs_gen_include}/${destination_h}/${base_out_name}_decl.h"
                       "${abs_gen_include}/${destination_h}/${base_out_name}_impl.h"
@@ -43,7 +43,6 @@ function(classgen_proc_single_cxx source
                       "out_impl_h:${abs_gen_include}/${destination_h}/${base_out_name}_impl.h"
     DEPENDS           ${classgen_can_script}/classgen_proc.py
                       ${source}
-    WORKING_DIRECTORY "${abs_gen_include}/${destination}/"
     VERBATIM
   )
   

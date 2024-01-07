@@ -26,21 +26,15 @@ class cg_writer_cpp(cg_writer):
     return self.get_block_gen_warning() + [ "" ]
 
   def write_decl_h(self, out_path:str, proj_name:str, base_name:str):
-    print("write_decl_h " + out_path)
-
     contents = self.get_block_initial_h()
     self.write_if_updated(out_path, contents)    
 
   def write_impl_h(self, out_path:str, proj_name:str, base_name:str):
-    print("write_impl_h " + out_path)      
-
     contents = self.get_block_initial_h()
     contents += [ f'#include "{proj_name}/{base_name}_decl.h"', "" ]    
     self.write_if_updated(out_path, contents)    
 
   def write_cpp(self, out_path:str, proj_name:str, base_name:str):
-    print("write_cpp " + out_path)      
-
     contents = self.get_block_initial_cpp()
     contents += [ f'#include "{proj_name}/{base_name}_decl.h"',
                   f'#include "{proj_name}/{base_name}_impl.h"', "" ]
