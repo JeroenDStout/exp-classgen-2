@@ -33,13 +33,21 @@ class cg_writer_cpp(cg_writer):
   @override
   def write_visit_enter(self, node:cg_tree.symbol_node):
     if node.symbol_type == cg_tree.symbol_node_type.NAMESPACE:
-      return [ "namespace " + node.identifier + " {" ]
+      return [
+        self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1),
+        "namespace " + node.identifier + " {",
+        self.meta_symbol(self.meta_symbol_type.INDENT, 4),
+      ]
     return []
     
   @override
   def write_visit_leave(self, node:cg_tree.symbol_node):
     if node.symbol_type == cg_tree.symbol_node_type.NAMESPACE:
-      return [ "}" ]
+      return [
+        self.meta_symbol(self.meta_symbol_type.INDENT, -4),
+        "}",
+        self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
+      ]
     return []
 
 
@@ -73,9 +81,18 @@ class cg_writer_cpp_decl_h(cg_writer_cpp):
   def write_visit_specific(self, node:cg_tree.symbol_node):
     match node.symbol_type:
       case cg_tree.symbol_node_type.ENUM:
-        return [ "enum " + node.identifier + " : unsigned char;" ]
+        return [
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1),
+          "enum " + node.identifier + " : unsigned char;",
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
+        ]
       case cg_tree.symbol_node_type.POD:
-        return [ "// pod", "struct " + node.identifier + ";" ]
+        return [ 
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1),
+          "// pod",
+          "struct " + node.identifier + ";",
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
+        ]
 
 #
 #

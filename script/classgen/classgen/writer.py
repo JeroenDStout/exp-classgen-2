@@ -7,11 +7,28 @@ from .    import tree as cg_tree
 #
 #
 class cg_writer():
+  #
   class visit_type(Enum):
     NONE  = auto()
     ENTER = auto()
     WRITE = auto()
+    
+  #
+  class meta_symbol_type(Enum):
+    INDENT         = auto()
+    OPTIONAL_SPACE = auto()
+    
+  #
+  #
+  #
+  class meta_symbol():
+    def __init__(self, symbol_type, value):
+      self.type  = symbol_type
+      self.value = value
 
+  #
+  #
+  #
   def __init__(self, trunk:cg_tree.symbol_node):
     self.trunk:cg_tree.symbol_node = trunk
     self.current_visit_stack       = [ trunk ]
@@ -71,17 +88,35 @@ class cg_writer():
     return []
 
   def write_if_updated(self, out_path:str, contents:list[str]):
-    content = '\n'.join(contents)
-    print(content)
+    string = ""
+
+    indentation = 0
+    optional_space_count = 0
+
+    for elem in contents:
+      if isinstance(elem, str):
+        if optional_space_count > 1:
+          string += "\n"
+        optional_space_count = 0
+        string += " " * indentation + elem + "\n"
+
+      elif isinstance(elem, self.meta_symbol):
+        match elem.type:
+          case self.meta_symbol_type.INDENT:
+            indentation += elem.value
+          case self.meta_symbol_type.OPTIONAL_SPACE:
+            optional_space_count += 1
+
+    print(string)
     
     if os_path.isfile(out_path):
       with open(out_path, 'r') as old_file:
         old_content = old_file.read()
-        if old_content == content:
+        if old_content == string:
           print(f"* ({os_path.basename(out_path)} was up to date)")
           return          
           
     with open(out_path, 'w') as new_file:
-      new_file.write('\n'.join(contents))
+      new_file.write(string)
       
     print(f"* {os_path.basename(out_path)} updated")
