@@ -50,6 +50,7 @@ class cg_writer():
     ret = self.write_visit(node)
     if self.current_visit_stack[-1] == node:
       ret += self.write_visit_leave(node)
+      self.current_visit_stack.pop()
     return ret
 
   def write_visit(self, node:cg_tree.symbol_node):
