@@ -121,7 +121,10 @@ class cg_writer():
           case self.meta_symbol_type.OPTIONAL_COMMA:
             optional_comma_count += 1
 
-    print(string)
+    string += "\n"
+
+    # debug
+    #print(string)
     
     if os_path.isfile(out_path):
       with open(out_path, 'r') as old_file:
@@ -131,6 +134,6 @@ class cg_writer():
           return          
           
     with open(out_path, 'w') as new_file:
-      new_file.write(string + "\n")
+      new_file.write(string)
       
     print(f"* {os_path.basename(out_path)} updated")
