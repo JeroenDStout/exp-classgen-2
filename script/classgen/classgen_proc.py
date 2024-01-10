@@ -57,7 +57,14 @@ processor.process()
 # debug
 #print(processor.trunk.to_big_string())
 
-writer = cg_writer_cpp.cg_writer_cpp(processor.trunk)
-if "out_decl_h" in sys_arg: writer.write_decl_h(sys_arg["out_decl_h"], sys_arg["proj"], sys_arg["obj"])
-if "out_impl_h" in sys_arg: writer.write_impl_h(sys_arg["out_impl_h"], sys_arg["proj"], sys_arg["obj"])
-if "out_cpp"    in sys_arg: writer.write_cpp(   sys_arg["out_cpp"   ], sys_arg["proj"], sys_arg["obj"])
+if "out_decl_h" in sys_arg:
+  writer = cg_writer_cpp.cg_writer_cpp_decl_h(processor.trunk)
+  writer.write_cpp(sys_arg["out_decl_h"], sys_arg["proj"], sys_arg["obj"])
+
+if "out_impl_h" in sys_arg:
+  writer = cg_writer_cpp.cg_writer_cpp_impl_h(processor.trunk)
+  writer.write_cpp(sys_arg["out_impl_h"], sys_arg["proj"], sys_arg["obj"])
+
+if "out_cpp" in sys_arg:
+  writer = cg_writer_cpp.cg_writer_cpp_cpp(processor.trunk)
+  writer.write_cpp(sys_arg["out_cpp"], sys_arg["proj"], sys_arg["obj"])
