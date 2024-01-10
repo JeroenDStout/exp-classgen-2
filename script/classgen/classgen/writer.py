@@ -91,6 +91,7 @@ class cg_writer():
   def write_if_updated(self, out_path:str, contents:list[str]):
     string = ""
 
+    newline = False
     indentation = 0
     optional_space_count = 0
     optional_comma_count = 0
@@ -103,7 +104,12 @@ class cg_writer():
           string += "\n" + " " * indentation
         optional_space_count = 0
         optional_comma_count = 0
-        string += "\n" + " " * indentation + elem
+
+        if newline:
+          string += "\n"
+        newline = True
+
+        string += " " * indentation + elem
 
       elif isinstance(elem, self.meta_symbol):
         match elem.type:
@@ -124,6 +130,6 @@ class cg_writer():
           return          
           
     with open(out_path, 'w') as new_file:
-      new_file.write(string)
+      new_file.write(string + "\n")
       
     print(f"* {os_path.basename(out_path)} updated")
