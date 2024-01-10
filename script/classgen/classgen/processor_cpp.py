@@ -51,6 +51,8 @@ class cg_processor_cpp(cg_processor):
   #
   @override
   def postprocess_node_specific(self, node:cg_tree.symbol_node):
+    if node.symbol_type == cg_tree.symbol_node_type.REFL:
+      return self.postprocess_node_specific_refl(node)
     if node.symbol_type == cg_tree.symbol_node_type.ENUM:
       return self.postprocess_node_specific_enum(node)
     if node.symbol_type == cg_tree.symbol_node_type.FN:
@@ -58,6 +60,10 @@ class cg_processor_cpp(cg_processor):
     if node.symbol_type == cg_tree.symbol_node_type.FN_MAP:
       return self.postprocess_node_specific_fn_map(node)
     return True, []
+  
+  def postprocess_node_specific_refl(self, node:cg_tree.symbol_node):
+    moved_obj = self.split_node_to_namespace_by_identifiers(node, "cpp_split", "refl_", lambda obj : True)
+    return True, moved_obj
   
   def postprocess_node_specific_enum(self, node:cg_tree.symbol_node):
     moved_obj = self.split_node_to_namespace_by_identifiers(node, "cpp_split", "enum_", lambda obj : obj.identifier != "~tokens")
