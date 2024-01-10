@@ -49,6 +49,20 @@ class cg_writer_cpp(cg_writer):
         self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
       ]
     return []
+    
+  def write_enum_block(self, node:cg_tree.symbol_node):
+    tokens = node.resolve_path([ "~tokens" ], True, False)
+    if tokens:
+      ret = []
+      for child in tokens.children:
+        ret += [
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_COMMA, 1),
+          child.identifier,
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_COMMA, 1),
+        ]
+      return ret
+
+    return []
 
 
 #
@@ -107,6 +121,46 @@ class cg_writer_cpp_impl_h(cg_writer_cpp):
       self.get_block_initial_h()
     + [ f'#include "{self.proj_name}/{self.base_name}_decl.h"', "" ]
     )
+
+  @override
+  def get_visit_type(self, node:cg_tree.symbol_node):
+    if node.symbol_type in [
+        cg_tree.symbol_node_type.REFL
+        ]:
+      return self.visit_type.NONE
+      
+    if node.symbol_type in [
+        cg_tree.symbol_node_type.ENUM,
+        cg_tree.symbol_node_type.POD
+        ]:
+      return self.visit_type.WRITE
+      
+    return self.visit_type.ENTER
+
+  @override
+  def write_visit_specific(self, node:cg_tree.symbol_node):
+    match node.symbol_type:
+      case cg_tree.symbol_node_type.ENUM:
+        return [
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1),
+          "enum " + node.identifier + " : unsigned char {",
+          self.meta_symbol(self.meta_symbol_type.INDENT, 4),
+        ] + self.write_enum_block(node) + [
+          self.meta_symbol(self.meta_symbol_type.INDENT, -4),
+          "};",
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
+        ]
+      case cg_tree.symbol_node_type.POD:
+        return [ 
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1),
+          "// pod",
+          "struct " + node.identifier + " {",
+          self.meta_symbol(self.meta_symbol_type.INDENT, 4),
+          "// ...",
+          self.meta_symbol(self.meta_symbol_type.INDENT, -4),
+          "};",
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
+        ]
 
 #
 #

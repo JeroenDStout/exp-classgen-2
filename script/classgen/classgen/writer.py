@@ -17,6 +17,7 @@ class cg_writer():
   class meta_symbol_type(Enum):
     INDENT         = auto()
     OPTIONAL_SPACE = auto()
+    OPTIONAL_COMMA = auto()
     
   #
   #
@@ -92,13 +93,17 @@ class cg_writer():
 
     indentation = 0
     optional_space_count = 0
+    optional_comma_count = 0
 
     for elem in contents:
       if isinstance(elem, str):
+        if optional_comma_count > 1:
+          string += ","
         if optional_space_count > 1:
-          string += "\n"
+          string += "\n" + " " * indentation
         optional_space_count = 0
-        string += " " * indentation + elem + "\n"
+        optional_comma_count = 0
+        string += "\n" + " " * indentation + elem
 
       elif isinstance(elem, self.meta_symbol):
         match elem.type:
@@ -106,6 +111,8 @@ class cg_writer():
             indentation += elem.value
           case self.meta_symbol_type.OPTIONAL_SPACE:
             optional_space_count += 1
+          case self.meta_symbol_type.OPTIONAL_COMMA:
+            optional_comma_count += 1
 
     print(string)
     
