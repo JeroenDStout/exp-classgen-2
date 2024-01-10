@@ -60,9 +60,17 @@ class cg_processor_cpp(cg_processor):
     if node.symbol_type == cg_tree.symbol_node_type.FN_MAP:
       return self.postprocess_node_specific_fn_map(node)
     return True, []
+
+  def should_split_out_of_refl(self, node:cg_tree.symbol_node):
+    return node.symbol_type in [
+       cg_tree.symbol_node_type.NAMESPACE,
+       cg_tree.symbol_node_type.ENUM,
+       cg_tree.symbol_node_type.POD
+    ]
+      
   
   def postprocess_node_specific_refl(self, node:cg_tree.symbol_node):
-    moved_obj = self.split_node_to_namespace_by_identifiers(node, "cpp_split", "refl_", lambda obj : True)
+    moved_obj = self.split_node_to_namespace_by_identifiers(node, "cpp_split", "refl_", lambda obj : self.should_split_out_of_refl(obj))
     return True, moved_obj
   
   def postprocess_node_specific_enum(self, node:cg_tree.symbol_node):

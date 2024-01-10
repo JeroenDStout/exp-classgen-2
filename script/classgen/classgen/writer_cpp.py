@@ -131,7 +131,9 @@ class cg_writer_cpp_impl_h(cg_writer_cpp):
       
     if node.symbol_type in [
         cg_tree.symbol_node_type.ENUM,
-        cg_tree.symbol_node_type.POD
+        cg_tree.symbol_node_type.POD,
+        cg_tree.symbol_node_type.FN,
+        cg_tree.symbol_node_type.FN_MAP
         ]:
       return self.visit_type.WRITE
       
@@ -159,6 +161,18 @@ class cg_writer_cpp_impl_h(cg_writer_cpp):
           "// ...",
           self.meta_symbol(self.meta_symbol_type.INDENT, -4),
           "};",
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
+        ]
+      case cg_tree.symbol_node_type.FN:
+        return [ 
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1),
+          "// fn " + node.identifier + ";",
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
+        ]
+      case cg_tree.symbol_node_type.FN_MAP:
+        return [ 
+          self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1),
+          "// fn_map " + node.identifier + ";",
           self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
         ]
 

@@ -122,7 +122,7 @@ class cg_processor():
     split_node.enter_secretly = True
     split_node.symbol_target = namespace
 
-    return [ node, split_node, namespace ] + objects_to_be_moved
+    return [ node.parent, node, split_node, namespace ] + objects_to_be_moved
   
   #
   #
