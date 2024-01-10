@@ -16,6 +16,7 @@ class cg_reader_visitor(classgen_grammarVisitor):
     self.indentation               = 0
     self.parser                    = parser
     self.trunk:cg_tree.symbol_node = cg_tree.symbol_node(None, "trunk")
+    self.trunk.symbol_type         = cg_tree.symbol_node_type.TRUNK
     self.stack:cg_reader_stack     = cg_reader_stack()
     self.stack.tail().symbol_node  = self.trunk
     

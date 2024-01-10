@@ -7,6 +7,7 @@ import copy
 #
 class symbol_node_type(Enum):
   NONE         = auto()
+  TRUNK        = auto()
   ALIAS        = auto()
   ALIAS_LOCAL  = auto()
   NAMESPACE    = auto()
