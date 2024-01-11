@@ -240,7 +240,7 @@ class cg_reader_visitor(classgen_grammarVisitor):
      path = self.get_name_from_identifier_name(ctx.identifier_name())
      if ctx.identifier_postfix() and ctx.identifier_postfix().identifier_namespace_post():
        post_ctx = ctx.identifier_postfix().identifier_namespace_post()
-       path = post_ctx.identifier_namespace_list().getText().split("::") + [ path ]
+       path = post_ctx.identifier_namespace_list().getText().split("::") + path
      return path
     
   #

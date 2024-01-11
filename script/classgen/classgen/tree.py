@@ -24,6 +24,9 @@ class symbol_node_type(Enum):
   
 class symbol_node():
   def __init__(self, parent_, identifier_:str):
+    if not isinstance(identifier_, str):
+      print("ERROR: not str: " + str(identifier_))
+
     self.identifier:str               = identifier_
     self.payload                      = None
     self.tags:list[str]               = []
