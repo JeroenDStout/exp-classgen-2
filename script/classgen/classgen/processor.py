@@ -21,6 +21,7 @@ class cg_processor():
     self.process_links()
     self.process_local_aliases()
     self.resolve_dangling()
+    self.process_node_types()
     self.postprocess()
     
   #
@@ -155,6 +156,25 @@ class cg_processor():
   #
   #
   #
+  def process_node_types(self):
+    dirty_nodes:list[cg_tree.symbol_node] = [ node for node in cg_tree.visit_symbol_nodes(self.trunk) ]
+    dirty_nodes = self.try_repeat_resolve(dirty_nodes, self.process_node_types_node)
+    if len(dirty_nodes):
+      print("ERROR: Could not complete postprocess")
+      
+  def process_node_types_node(self, node:cg_tree.symbol_node):
+    all_success, new_nodes = self.process_node_types_node_specific(node)
+    return all_success, new_nodes
+      
+  def process_node_types_node_specific(self, node:cg_tree.symbol_node):
+    if node.symbol_type == cg_tree.symbol_node_type.NONE:
+      node.symbol_type = cg_tree.symbol_node_type.NAMESPACE
+      return True, [ node ]
+    return True, []
+    
+  #
+  #
+  #
   def postprocess(self):
     dirty_nodes:list[cg_tree.symbol_node] = [ node for node in cg_tree.visit_symbol_nodes(self.trunk) ]
     dirty_nodes = self.try_repeat_resolve(dirty_nodes, self.postprocess_node)
@@ -167,6 +187,16 @@ class cg_processor():
       
   def postprocess_node_specific(self, node:cg_tree.symbol_node):
     return True, []
+  
+  def move_children(self, node_src:cg_tree.symbol_node, node_dest:cg_tree.symbol_node, fn_choose):
+    objects_to_be_moved = [ obj for obj in node_src.children if not obj.enter_secretly and fn_choose(obj) ]
+    if not len(objects_to_be_moved):
+      return []
+
+    for obj in objects_to_be_moved:
+      obj.change_parent(node_dest)
+
+    return [ node_src, node_dest ] + objects_to_be_moved
   
   def split_node_to_namespace_by_identifiers(self, node:cg_tree.symbol_node, split_tag:str, split_prefix:str, fn_choose):
     objects_to_be_moved = [ obj for obj in node.children if not obj.enter_secretly and fn_choose(obj) ]
