@@ -69,7 +69,22 @@ class cg_writer_cpp(cg_writer):
     return []
   
   def write_typed_value(self, node:cg_tree.symbol_node, value:cg_typed_value):
+    if value.content_t == cg_typed_value_type.OBJECT:
+      return self.write_object_path(node, value.content)
     return str(value)
+  
+  def write_object_path(self, node:cg_tree.symbol_node, value:cg_tree.symbol_node):
+    out_path     = [ ]
+    node_parents = [ n for n in cg_tree.visit_symbol_node_parents(node) ]
+    
+    for value_parent in cg_tree.visit_symbol_node_parents(value):
+      if value_parent.enter_secretly:
+        continue
+      if value_parent in node_parents:
+        break
+      out_path.insert(0, value_parent.identifier)
+
+    return "::".join(out_path)
 
 #
 #

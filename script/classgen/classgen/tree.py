@@ -147,3 +147,8 @@ def visit_symbol_nodes(starting_node:symbol_node):
   yield starting_node
   for child in starting_node.children:
     yield from visit_symbol_nodes(child)
+
+def visit_symbol_node_parents(node:symbol_node):
+  yield node
+  if node.parent:
+    yield from visit_symbol_node_parents(node.parent)
