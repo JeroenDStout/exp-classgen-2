@@ -3,6 +3,7 @@ from .               import tree            as cg_tree
 from .reader_stack   import cg_reader_stack
 from .types_abstract import cg_typed_value
 from .types_abstract import cg_typed_value_type
+from .types_builtin  import cg_map_type
 from .types_builtin  import cg_map_case
     
 #
@@ -19,6 +20,7 @@ class cg_processor():
     self.preprocess()
     self.process_links()
     self.process_local_aliases()
+    self.resolve_dangling()
     self.postprocess()
     
   #
@@ -55,9 +57,10 @@ class cg_processor():
     
     all_succeeded = True
     for obj in links_to_try:
-      if not self.try_resolve_dangling_object(node, obj):
-        all_succeeded = False
+      if not isinstance(obj, cg_typed_value):
         continue
+      if not self.try_resolve_cg_typed_value(node, obj):
+        all_succeeded = False
       
       new_nodes += self.process_node_link(obj.content, node.parent)
       
@@ -86,6 +89,68 @@ class cg_processor():
     node.symbol_target.dangling_objects.extend(node.dangling_objects)
     node.dangling_objects = []
     return True, []
+    
+  #
+  #
+  #
+  def resolve_dangling(self):
+    dirty_nodes:list[cg_tree.symbol_node] = [ node for node in cg_tree.visit_symbol_nodes(self.trunk) if len(node.dangling_objects) ]
+    dirty_nodes = self.try_repeat_resolve(dirty_nodes, self.resolve_dangling_for_node)
+    if len(dirty_nodes):
+      print("ERROR: Could not complete resolve_dangling")
+      
+  def resolve_dangling_for_node(self, node:cg_tree.symbol_node):
+    all_success = True
+    new_nodes   = []
+    for dangling in node.dangling_objects:
+      success, nodes = self.resolve_dangling_specific(node, dangling)
+      all_success = all_success and success
+      new_nodes   += nodes
+    
+    return all_success, new_nodes
+      
+  def resolve_dangling_specific(self, node:cg_tree.symbol_node, dangling_object):
+    if isinstance(dangling_object, cg_map_type):
+      return self.resolve_dangling_map_type_specific(node, dangling_object)
+    if isinstance(dangling_object, cg_map_case):
+      return self.resolve_dangling_map_case_specific(node, dangling_object)
+    return True, []
+      
+  def resolve_dangling_map_type_specific(self, node:cg_tree.symbol_node, map_case:cg_map_type):
+    all_success = True
+    
+    if map_case.src.content_t == cg_typed_value_type.PATH:
+      result = self.try_resolve_cg_typed_value(node, map_case.src)
+      all_success = all_success and result
+      
+    if map_case.dest.content_t == cg_typed_value_type.PATH:
+      result = self.try_resolve_cg_typed_value(node, map_case.dest)
+      all_success = all_success and result
+      
+    return all_success, []
+      
+  def resolve_dangling_map_case_specific(self, node:cg_tree.symbol_node, map_case:cg_map_case):
+    all_success = True
+    
+    src_node  = node
+    dest_node = node
+    
+    map_type  = [ obj for obj in node.dangling_objects if isinstance(obj, cg_map_type)]
+    if len(map_type) > 0:
+      if map_type[0].src.content_t == cg_typed_value_type.OBJECT:
+        src_node  = map_type[0].src.content
+      if map_type[0].dest.content_t == cg_typed_value_type.OBJECT:
+        dest_node = map_type[0].dest.content
+
+    if map_case.src.content_t == cg_typed_value_type.PATH:
+      result = self.try_resolve_cg_typed_value(src_node, map_case.src)
+      all_success = all_success and result
+      
+    if map_case.dest.content_t == cg_typed_value_type.PATH:
+      result = self.try_resolve_cg_typed_value(dest_node, map_case.dest)
+      all_success = all_success and result
+      
+    return all_success, []
     
   #
   #
@@ -137,6 +202,8 @@ class cg_processor():
       sub_node = dest.ensure_child(child.identifier)
       new_nodes.append(sub_node)
       sub_node.tags.append("inherited")
+        
+      sub_node.dangling_objects = [ copy.copy(obj) for obj in child.dangling_objects ]
         
       if child.symbol_type not in [ cg_tree.symbol_node_type.FN, cg_tree.symbol_node_type.FN_MAP ]:
         sub_node.change_to_type_or_fail(cg_tree.symbol_node_type.ALIAS)
@@ -203,21 +270,16 @@ class cg_processor():
   #
   #
   #
-  def try_resolve_dangling_object(self, parent:cg_tree.symbol_node, dangling_object):
-    if type(dangling_object) == cg_typed_value:
-      typed_value:cg_typed_value = dangling_object
-      
-      if typed_value.content_t != cg_typed_value_type.PATH:
-        return True
-      
-      obj = parent.resolve_path(typed_value.content)
-      if obj == None:
-        return False
-      
-      typed_value.content_t = cg_typed_value_type.OBJECT
-      typed_value.content   = obj
+  def try_resolve_cg_typed_value(self, parent:cg_tree.symbol_node, dangling_object:cg_typed_value):      
+    if dangling_object.content_t != cg_typed_value_type.PATH:
       return True
     
+    obj = parent.resolve_path(dangling_object.content)
+    if obj == None:
+      return False
+    
+    dangling_object.content_t = cg_typed_value_type.OBJECT
+    dangling_object.content   = obj
     return True
     
 

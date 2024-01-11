@@ -101,6 +101,8 @@ class symbol_node():
           
     if not allow_auto_parent:
       return None
+    if not self.parent:
+      return None
 
     return self.parent.resolve_path(path_name, follow_alias_local)
     

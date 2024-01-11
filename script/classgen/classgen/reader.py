@@ -6,6 +6,7 @@ from .               import tree            as cg_tree
 from .reader_stack   import cg_reader_stack
 from .types_abstract import cg_typed_value
 from .types_abstract import cg_typed_value_type
+from .types_builtin  import cg_map_type
 from .types_builtin  import cg_map_case
     
 #
@@ -96,11 +97,31 @@ class cg_reader_visitor(classgen_grammarVisitor):
 
     self.stack.push()
     self.stack.tail().symbol_node = new_node
+
+    map_type:cg_map_type = cg_map_type()
+
+    map_type.src.type_t     = cg_typed_value_type.AUTO
+    map_type.src.content_t  = cg_typed_value_type.AUTO
+
+    map_type.dest.type_t    = cg_typed_value_type.AUTO
+    map_type.dest.content_t = cg_typed_value_type.NONE
+
+    value_ctx = ctx.definition_object_implied_map_to_value()
+    if value_ctx.identifier_pure():
+      map_type.dest.content_t = cg_typed_value_type.PATH
+      map_type.dest.content   = self.get_name_from_identifier_pure(value_ctx.identifier_pure())
+    elif value_ctx.definition_object():
+      map_type.dest.content_t = cg_typed_value_type.OBJECT
+      map_type.dest.content   = self.open_node_from_path(value_ctx.definition_object().identifier_ex())
+    elif value_ctx.mapping_value_constant():
+      map_type.dest.content_t = cg_typed_value_type.CONSTANT
+      map_type.dest.content   = value_ctx.mapping_value_constant().getText()
+
+    new_node.dangling_objects.append(map_type)
     
     super().visitDeclaration_object_implied_map(ctx)
 
     self.stack.pop()
-
     
   #
   #
