@@ -3,6 +3,10 @@ from msilib.schema import File
 from overrides import override
 from .               import tree            as cg_tree
 from .writer         import cg_writer
+from .types_builtin  import cg_map_type
+from .types_builtin  import cg_map_case
+from .types_abstract import cg_typed_value
+from .types_abstract import cg_typed_value_type
 
 #
 #
@@ -63,7 +67,9 @@ class cg_writer_cpp(cg_writer):
       return ret
 
     return []
-
+  
+  def write_typed_value(self, node:cg_tree.symbol_node, value:cg_typed_value):
+    return str(value)
 
 #
 #
@@ -166,15 +172,62 @@ class cg_writer_cpp_impl_h(cg_writer_cpp):
       case cg_tree.symbol_node_type.FN:
         return [ 
           self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1),
-          "// fn " + node.identifier + ";",
+          self.meta_symbol(self.meta_symbol_type.COMMENT, 1),
+          "fn",
+          node.identifier + ";",
+          self.meta_symbol(self.meta_symbol_type.COMMENT, -1),
           self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
         ]
       case cg_tree.symbol_node_type.FN_MAP:
         return [ 
           self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1),
-          "// fn_map " + node.identifier + ";",
+          "// fn_map",
+          self.meta_symbol(self.meta_symbol_type.COMMENT, 1)
+        ] + self.write_visit_fn_map(node) + [
+          self.meta_symbol(self.meta_symbol_type.COMMENT, -1),
           self.meta_symbol(self.meta_symbol_type.OPTIONAL_SPACE, 1)
         ]
+      
+  def write_visit_fn_map(self, node:cg_tree.symbol_node):
+    
+    src_value  = None
+    dest_value = None
+
+    map_type   = [ obj for obj in node.dangling_objects if isinstance(obj, cg_map_type)]
+    if len(map_type) > 0:
+      src_value  = map_type[0].src
+      dest_value = map_type[0].dest
+      
+    map_values = [ obj for obj in node.dangling_objects if isinstance(obj, cg_map_case)]
+    if len(map_type) > 0:
+      src_value  = map_type[0].src
+      dest_value = map_type[0].dest
+      
+    header = "constexpr auto " + node.identifier
+    
+    if src_value:
+      header += "(" + self.write_typed_value(node, src_value) + " key)"
+    if dest_value:
+      header += " -> " + self.write_typed_value(node, dest_value) + " {"
+      
+    ret = [
+      header,
+      self.meta_symbol(self.meta_symbol_type.INDENT, 4),
+      "switch (key) {",
+      self.meta_symbol(self.meta_symbol_type.INDENT, 4),
+    ]
+    
+    for value in map_values:
+      ret += [ "case " + self.write_typed_value(node, value.src) + ": return " + self.write_typed_value(node, value.dest) + ";" ]
+
+    ret += [
+      self.meta_symbol(self.meta_symbol_type.INDENT, -4),
+      "}",
+      self.meta_symbol(self.meta_symbol_type.INDENT, -4),
+      "}",
+    ]
+    
+    return ret
 
 #
 #

@@ -16,6 +16,7 @@ class cg_writer():
   #
   class meta_symbol_type(Enum):
     INDENT         = auto()
+    COMMENT        = auto()
     OPTIONAL_SPACE = auto()
     OPTIONAL_COMMA = auto()
     
@@ -94,6 +95,7 @@ class cg_writer():
 
     newline = False
     indentation = 0
+    comment     = 0
     optional_space_count = 0
     optional_comma_count = 0
 
@@ -110,12 +112,15 @@ class cg_writer():
           string += "\n"
         newline = True
 
-        string += " " * indentation + elem
+        current_indent = max(0, indentation - (comment * 2))
+        string += ("//" * comment) + (" " * current_indent) + elem
 
       elif isinstance(elem, self.meta_symbol):
         match elem.type:
           case self.meta_symbol_type.INDENT:
             indentation += elem.value
+          case self.meta_symbol_type.COMMENT:
+            comment += elem.value
           case self.meta_symbol_type.OPTIONAL_SPACE:
             optional_space_count += 1
           case self.meta_symbol_type.OPTIONAL_COMMA:
